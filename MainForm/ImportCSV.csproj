@@ -22,12 +22,12 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <UpdateUrl>https://trilogen1.sharepoint.com/Shared%2520Documents/ImportCSV/</UpdateUrl>
+    <UpdateUrl>http://www.barstarsinc.com/downloads/importcsv/</UpdateUrl>
     <ProductName>ImportCSV</ProductName>
     <PublisherName>Trilogen</PublisherName>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>6</ApplicationRevision>
-    <ApplicationVersion>1.2.0.6</ApplicationVersion>
+    <ApplicationRevision>7</ApplicationRevision>
+    <ApplicationVersion>1.2.0.7</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
