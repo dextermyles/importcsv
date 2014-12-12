@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ImportForm));
             this.gbLogin = new System.Windows.Forms.GroupBox();
             this.txtDomain = new System.Windows.Forms.TextBox();
@@ -58,6 +59,8 @@
             this.lblMappings = new System.Windows.Forms.Label();
             this.cbListname = new System.Windows.Forms.ComboBox();
             this.lblListname = new System.Windows.Forms.Label();
+            this.btnDisconnect = new System.Windows.Forms.Button();
+            this.btnReset = new System.Windows.Forms.Button();
             this.gbLogin.SuspendLayout();
             this.gbValidate.SuspendLayout();
             this.gbImport.SuspendLayout();
@@ -66,6 +69,7 @@
             // 
             // gbLogin
             // 
+            this.gbLogin.Controls.Add(this.btnDisconnect);
             this.gbLogin.Controls.Add(this.txtDomain);
             this.gbLogin.Controls.Add(this.txtPassword);
             this.gbLogin.Controls.Add(this.txtUsername);
@@ -198,11 +202,11 @@
             // 
             // btnValidateFile
             // 
-            this.btnValidateFile.Location = new System.Drawing.Point(290, 82);
+            this.btnValidateFile.Location = new System.Drawing.Point(267, 82);
             this.btnValidateFile.Name = "btnValidateFile";
-            this.btnValidateFile.Size = new System.Drawing.Size(102, 23);
+            this.btnValidateFile.Size = new System.Drawing.Size(125, 23);
             this.btnValidateFile.TabIndex = 8;
-            this.btnValidateFile.Text = "Validate CSV";
+            this.btnValidateFile.Text = "Validate CSV file";
             this.btnValidateFile.UseVisualStyleBackColor = true;
             this.btnValidateFile.Click += new System.EventHandler(this.btnValidateFile_Click);
             // 
@@ -240,6 +244,7 @@
             // 
             // gbImport
             // 
+            this.gbImport.Controls.Add(this.btnReset);
             this.gbImport.Controls.Add(this.dgvMappings);
             this.gbImport.Controls.Add(this.cbSelectAll);
             this.gbImport.Controls.Add(this.btnImport);
@@ -248,7 +253,7 @@
             this.gbImport.Controls.Add(this.lblListname);
             this.gbImport.Location = new System.Drawing.Point(12, 295);
             this.gbImport.Name = "gbImport";
-            this.gbImport.Size = new System.Drawing.Size(398, 225);
+            this.gbImport.Size = new System.Drawing.Size(398, 235);
             this.gbImport.TabIndex = 0;
             this.gbImport.TabStop = false;
             this.gbImport.Text = "Import into Sharepoint";
@@ -262,12 +267,22 @@
             this.dgvMappings.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
             this.dgvMappings.BackgroundColor = System.Drawing.Color.WhiteSmoke;
             this.dgvMappings.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.dgvMappings.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.Raised;
+            this.dgvMappings.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
             this.dgvMappings.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvMappings.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Include,
             this.Column,
             this.Mapping,
             this.Type});
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = System.Drawing.Color.LightGray;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Tahoma", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.GradientActiveCaption;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvMappings.DefaultCellStyle = dataGridViewCellStyle1;
             this.dgvMappings.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgvMappings.Location = new System.Drawing.Point(95, 46);
             this.dgvMappings.MultiSelect = false;
@@ -279,7 +294,7 @@
             this.dgvMappings.ShowCellToolTips = false;
             this.dgvMappings.ShowEditingIcon = false;
             this.dgvMappings.ShowRowErrors = false;
-            this.dgvMappings.Size = new System.Drawing.Size(297, 123);
+            this.dgvMappings.Size = new System.Drawing.Size(297, 130);
             this.dgvMappings.TabIndex = 10;
             this.dgvMappings.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvMappings_CellValueChanged);
             // 
@@ -316,7 +331,7 @@
             // cbSelectAll
             // 
             this.cbSelectAll.AutoSize = true;
-            this.cbSelectAll.Location = new System.Drawing.Point(311, 170);
+            this.cbSelectAll.Location = new System.Drawing.Point(313, 178);
             this.cbSelectAll.Name = "cbSelectAll";
             this.cbSelectAll.Size = new System.Drawing.Size(79, 20);
             this.cbSelectAll.TabIndex = 11;
@@ -326,7 +341,7 @@
             // 
             // btnImport
             // 
-            this.btnImport.Location = new System.Drawing.Point(306, 196);
+            this.btnImport.Location = new System.Drawing.Point(306, 206);
             this.btnImport.Name = "btnImport";
             this.btnImport.Size = new System.Drawing.Size(86, 23);
             this.btnImport.TabIndex = 12;
@@ -363,11 +378,32 @@
             this.lblListname.TabIndex = 0;
             this.lblListname.Text = "List:";
             // 
+            // btnDisconnect
+            // 
+            this.btnDisconnect.Enabled = false;
+            this.btnDisconnect.Location = new System.Drawing.Point(222, 136);
+            this.btnDisconnect.Name = "btnDisconnect";
+            this.btnDisconnect.Size = new System.Drawing.Size(89, 23);
+            this.btnDisconnect.TabIndex = 6;
+            this.btnDisconnect.Text = "Disconnect";
+            this.btnDisconnect.UseVisualStyleBackColor = true;
+            this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
+            // 
+            // btnReset
+            // 
+            this.btnReset.Location = new System.Drawing.Point(222, 206);
+            this.btnReset.Name = "btnReset";
+            this.btnReset.Size = new System.Drawing.Size(75, 23);
+            this.btnReset.TabIndex = 13;
+            this.btnReset.Text = "Reset";
+            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
+            // 
             // ImportForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(420, 532);
+            this.ClientSize = new System.Drawing.Size(420, 541);
             this.Controls.Add(this.gbImport);
             this.Controls.Add(this.gbValidate);
             this.Controls.Add(this.gbLogin);
@@ -420,5 +456,7 @@
         private System.Windows.Forms.DataGridViewLinkColumn Column;
         private System.Windows.Forms.DataGridViewComboBoxColumn Mapping;
         private System.Windows.Forms.DataGridViewComboBoxColumn Type;
+        private System.Windows.Forms.Button btnDisconnect;
+        private System.Windows.Forms.Button btnReset;
     }
 }

@@ -89,13 +89,6 @@ namespace SharepointListImport
                         }
                     }
 
-                    // lists found
-                    if (cbListname.Items.Count > 0)
-                    {
-                        // enable csv processing
-                        gbValidate.Enabled = true;
-                    }
-
                     // success
                     connected = true;
 
@@ -277,7 +270,12 @@ namespace SharepointListImport
 
             if (result)
             {
+                // button flags
                 btnConnect.Enabled = false;
+                btnDisconnect.Enabled = true;
+
+                // enable csv processing
+                gbValidate.Enabled = true;
             }
         }
         private void UpdateMappings()
@@ -613,6 +611,57 @@ namespace SharepointListImport
                     cbCell.Value = true;
                 }
             }
+        }
+
+        private void btnDisconnect_Click(object sender, EventArgs e)
+        {
+            // flags
+            btnConnect.Enabled = true;
+            btnDisconnect.Enabled = false;
+            
+            // reset validate group box
+            gbValidate.Enabled = false;
+            txtImportFilename.Text = string.Empty;
+            lblNumRecords.Text = "0 records";
+
+            // reset import group box
+            dgvMappings.Rows.Clear(); // clear rows in datagridview
+            cbListname.Items.Clear(); // clear sharepoint list drop down
+            cbListname.Text = string.Empty;
+            gbImport.Enabled = false;
+        }
+
+        private void btnReset_Click(object sender, EventArgs e)
+        {
+            // reset mapping grid
+            foreach (DataGridViewRow row in dgvMappings.Rows)
+            {
+                // checkbox
+                DataGridViewCheckBoxCell cbSelected = (DataGridViewCheckBoxCell)row.Cells[0];
+
+                if (cbSelected != null)
+                {
+                    bool isSelected = Convert.ToBoolean(cbSelected.Value);
+                    
+                    if (isSelected)
+                        cbSelected.Value = false;
+                }
+                
+                // mapping drop down
+                DataGridViewComboBoxCell cbMapping = (DataGridViewComboBoxCell)row.Cells[2];
+                
+                if(cbMapping != null)
+                    cbMapping.Value = null;
+
+                // data type
+                DataGridViewComboBoxCell cbType = (DataGridViewComboBoxCell)row.Cells[3];
+                
+                if (cbType != null)
+                    cbType.Value = null;
+            }
+
+            // refresh mappings
+            dgvMappings.Update();
         }
     }
 }
