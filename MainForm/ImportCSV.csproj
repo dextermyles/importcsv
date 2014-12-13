@@ -22,7 +22,7 @@
     <UpdatePeriodically>false</UpdatePeriodically>
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
-    <UpdateUrl>http://www.barstarsinc.com/downloads/importcsv/</UpdateUrl>
+    <UpdateUrl>http://importcsv.sourceforge.net/downloads/</UpdateUrl>
     <ProductName>ImportCSV</ProductName>
     <PublisherName>Trilogen</PublisherName>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
@@ -59,7 +59,7 @@
     <ManifestKeyFile>ImportCSV_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
-    <GenerateManifests>false</GenerateManifests>
+    <GenerateManifests>true</GenerateManifests>
   </PropertyGroup>
   <PropertyGroup>
     <SignManifests>false</SignManifests>

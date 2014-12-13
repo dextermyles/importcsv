@@ -1,12 +1,8 @@
-﻿using System;
+﻿using Microsoft.SharePoint.Client;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.SharePoint.Client;
-using Trilogen.Helpers;
-using System.Windows.Forms;
 using System.Net;
+using System.Windows.Forms;
 
 namespace Trilogen
 {
