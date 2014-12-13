@@ -339,7 +339,11 @@ namespace Trilogen
                     {
                         cbCurrentMapping.Value = matchedProperty;
                     }  
-                }  
+                }
+
+                // refresh grid
+                dgvMappings.Update();
+                dgvMappings.Refresh();
             }
         }
 
