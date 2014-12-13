@@ -1,4 +1,4 @@
-﻿namespace SharepointListImport
+﻿namespace Trilogen
 {
     partial class ImportForm
     {
@@ -31,6 +31,7 @@
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ImportForm));
             this.gbLogin = new System.Windows.Forms.GroupBox();
+            this.btnDisconnect = new System.Windows.Forms.Button();
             this.txtDomain = new System.Windows.Forms.TextBox();
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.txtUsername = new System.Windows.Forms.TextBox();
@@ -49,6 +50,7 @@
             this.lblFilename = new System.Windows.Forms.Label();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.gbImport = new System.Windows.Forms.GroupBox();
+            this.btnReset = new System.Windows.Forms.Button();
             this.dgvMappings = new System.Windows.Forms.DataGridView();
             this.Include = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.Column = new System.Windows.Forms.DataGridViewLinkColumn();
@@ -59,8 +61,6 @@
             this.lblMappings = new System.Windows.Forms.Label();
             this.cbListname = new System.Windows.Forms.ComboBox();
             this.lblListname = new System.Windows.Forms.Label();
-            this.btnDisconnect = new System.Windows.Forms.Button();
-            this.btnReset = new System.Windows.Forms.Button();
             this.gbLogin.SuspendLayout();
             this.gbValidate.SuspendLayout();
             this.gbImport.SuspendLayout();
@@ -86,16 +86,28 @@
             this.gbLogin.TabStop = false;
             this.gbLogin.Text = "Sharepoint Details";
             // 
+            // btnDisconnect
+            // 
+            this.btnDisconnect.Enabled = false;
+            this.btnDisconnect.Location = new System.Drawing.Point(222, 136);
+            this.btnDisconnect.Name = "btnDisconnect";
+            this.btnDisconnect.Size = new System.Drawing.Size(89, 23);
+            this.btnDisconnect.TabIndex = 6;
+            this.btnDisconnect.Text = "Disconnect";
+            this.btnDisconnect.UseVisualStyleBackColor = true;
+            this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
+            // 
             // txtDomain
             // 
+            this.txtDomain.BackColor = System.Drawing.Color.LightSteelBlue;
             this.txtDomain.Location = new System.Drawing.Point(95, 106);
             this.txtDomain.Name = "txtDomain";
             this.txtDomain.Size = new System.Drawing.Size(140, 23);
             this.txtDomain.TabIndex = 4;
-            this.txtDomain.Text = "opsba0";
             // 
             // txtPassword
             // 
+            this.txtPassword.BackColor = System.Drawing.Color.LightSteelBlue;
             this.txtPassword.Location = new System.Drawing.Point(95, 77);
             this.txtPassword.Name = "txtPassword";
             this.txtPassword.PasswordChar = '*';
@@ -104,11 +116,11 @@
             // 
             // txtUsername
             // 
+            this.txtUsername.BackColor = System.Drawing.Color.LightSteelBlue;
             this.txtUsername.Location = new System.Drawing.Point(96, 48);
             this.txtUsername.Name = "txtUsername";
             this.txtUsername.Size = new System.Drawing.Size(140, 23);
             this.txtUsername.TabIndex = 2;
-            this.txtUsername.Text = "elvis";
             // 
             // label5
             // 
@@ -149,11 +161,12 @@
             // 
             // txtSiteUrl
             // 
+            this.txtSiteUrl.BackColor = System.Drawing.Color.LightSteelBlue;
             this.txtSiteUrl.Location = new System.Drawing.Point(95, 19);
             this.txtSiteUrl.Name = "txtSiteUrl";
             this.txtSiteUrl.Size = new System.Drawing.Size(297, 23);
             this.txtSiteUrl.TabIndex = 1;
-            this.txtSiteUrl.Text = "http://empire.opsba.org:50300";
+            this.txtSiteUrl.Text = "http://";
             // 
             // lblSiteUrl
             // 
@@ -222,6 +235,7 @@
             // 
             // txtImportFilename
             // 
+            this.txtImportFilename.BackColor = System.Drawing.Color.LightSteelBlue;
             this.txtImportFilename.Location = new System.Drawing.Point(95, 20);
             this.txtImportFilename.Name = "txtImportFilename";
             this.txtImportFilename.Size = new System.Drawing.Size(214, 23);
@@ -258,6 +272,16 @@
             this.gbImport.TabStop = false;
             this.gbImport.Text = "Import into Sharepoint";
             // 
+            // btnReset
+            // 
+            this.btnReset.Location = new System.Drawing.Point(222, 206);
+            this.btnReset.Name = "btnReset";
+            this.btnReset.Size = new System.Drawing.Size(75, 23);
+            this.btnReset.TabIndex = 13;
+            this.btnReset.Text = "Reset";
+            this.btnReset.UseVisualStyleBackColor = true;
+            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
+            // 
             // dgvMappings
             // 
             this.dgvMappings.AllowUserToAddRows = false;
@@ -265,7 +289,7 @@
             this.dgvMappings.AllowUserToResizeRows = false;
             this.dgvMappings.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.ColumnHeader;
             this.dgvMappings.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
-            this.dgvMappings.BackgroundColor = System.Drawing.Color.WhiteSmoke;
+            this.dgvMappings.BackgroundColor = System.Drawing.Color.LightSteelBlue;
             this.dgvMappings.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.dgvMappings.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.Raised;
             this.dgvMappings.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
@@ -360,6 +384,7 @@
             // 
             // cbListname
             // 
+            this.cbListname.BackColor = System.Drawing.Color.LightSteelBlue;
             this.cbListname.FormattingEnabled = true;
             this.cbListname.Location = new System.Drawing.Point(95, 16);
             this.cbListname.Name = "cbListname";
@@ -377,27 +402,6 @@
             this.lblListname.Size = new System.Drawing.Size(32, 16);
             this.lblListname.TabIndex = 0;
             this.lblListname.Text = "List:";
-            // 
-            // btnDisconnect
-            // 
-            this.btnDisconnect.Enabled = false;
-            this.btnDisconnect.Location = new System.Drawing.Point(222, 136);
-            this.btnDisconnect.Name = "btnDisconnect";
-            this.btnDisconnect.Size = new System.Drawing.Size(89, 23);
-            this.btnDisconnect.TabIndex = 6;
-            this.btnDisconnect.Text = "Disconnect";
-            this.btnDisconnect.UseVisualStyleBackColor = true;
-            this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
-            // 
-            // btnReset
-            // 
-            this.btnReset.Location = new System.Drawing.Point(222, 206);
-            this.btnReset.Name = "btnReset";
-            this.btnReset.Size = new System.Drawing.Size(75, 23);
-            this.btnReset.TabIndex = 13;
-            this.btnReset.Text = "Reset";
-            this.btnReset.UseVisualStyleBackColor = true;
-            this.btnReset.Click += new System.EventHandler(this.btnReset_Click);
             // 
             // ImportForm
             // 

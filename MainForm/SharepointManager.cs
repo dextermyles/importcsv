@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.SharePoint.Client;
-using SharepointListImport.Helpers;
+using Trilogen.Helpers;
 using System.Windows.Forms;
 using System.Net;
 
-namespace SharepointListImport
+namespace Trilogen
 {
     public class SharepointManager
     {

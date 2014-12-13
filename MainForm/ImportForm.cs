@@ -11,12 +11,12 @@ using System.Windows.Forms;
 using Microsoft.SharePoint;
 using System.IO;
 using CsvHelper;
-using SharepointListImport.Helpers;
+using Trilogen.Helpers;
 using System.Configuration;
 using System.Deployment;
 using System.Reflection;
 
-namespace SharepointListImport
+namespace Trilogen
 {
     public partial class ImportForm : Form
     {
@@ -385,7 +385,7 @@ namespace SharepointListImport
                 if (isChecked)
                 {
                     // get string ref
-                    string strDataType = Convert.ToString(cbType.ValueMember);
+                    string strDataType = Convert.ToString(cbType.Value);
 
                     // has been set
                     if (!string.IsNullOrEmpty(strDataType))

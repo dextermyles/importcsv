@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.SharePoint.Client;
 
 
-namespace SharepointListImport.Helpers
+namespace Trilogen.Helpers
 {
     public class ComboBoxItem
     {
