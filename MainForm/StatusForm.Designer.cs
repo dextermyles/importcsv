@@ -32,27 +32,28 @@
             this.pbStatus = new System.Windows.Forms.ProgressBar();
             this.lblStatus = new System.Windows.Forms.Label();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.lblLoadingImage = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // pbStatus
             // 
-            this.pbStatus.Location = new System.Drawing.Point(12, 32);
+            this.pbStatus.Location = new System.Drawing.Point(9, 33);
             this.pbStatus.Name = "pbStatus";
             this.pbStatus.Size = new System.Drawing.Size(290, 20);
             this.pbStatus.TabIndex = 0;
             // 
             // lblStatus
             // 
-            this.lblStatus.Location = new System.Drawing.Point(9, 9);
+            this.lblStatus.Location = new System.Drawing.Point(46, 6);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(290, 20);
+            this.lblStatus.Size = new System.Drawing.Size(253, 23);
             this.lblStatus.TabIndex = 0;
             this.lblStatus.Text = "Importing...";
-            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(207, 59);
+            this.btnCancel.Location = new System.Drawing.Point(204, 59);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(95, 23);
             this.btnCancel.TabIndex = 1;
@@ -60,12 +61,21 @@
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
+            // lblLoadingImage
+            // 
+            this.lblLoadingImage.Image = global::Trilogen.Properties.Resources.loader;
+            this.lblLoadingImage.Location = new System.Drawing.Point(12, 6);
+            this.lblLoadingImage.Name = "lblLoadingImage";
+            this.lblLoadingImage.Size = new System.Drawing.Size(28, 23);
+            this.lblLoadingImage.TabIndex = 2;
+            // 
             // StatusForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(314, 91);
+            this.ClientSize = new System.Drawing.Size(308, 91);
             this.ControlBox = false;
+            this.Controls.Add(this.lblLoadingImage);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.lblStatus);
             this.Controls.Add(this.pbStatus);
@@ -85,5 +95,6 @@
         private System.Windows.Forms.ProgressBar pbStatus;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.Button btnCancel;
+        private System.Windows.Forms.Label lblLoadingImage;
     }
 }
