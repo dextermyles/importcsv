@@ -6,11 +6,28 @@ using System.Windows.Forms;
 
 namespace Trilogen
 {
+    public delegate void ImportHandler(ImportEvent e);
+    
+    public class ImportEvent : EventArgs
+    {
+        public bool Success = false;
+        public string ErrorMessage = string.Empty;
+        public int RecordsImported = 0;
+        public int TotalRecords = 0;
+        public float ImportProgressValue = 0f;
+    }
+
     public class SharepointManager
     {
+        // members
         private ClientContext _context;
         private Web _web;
-        private int maxListItemsPerQuery = 120;
+        private int maxListItemsPerQuery = 40;
+       
+        // events
+        public event ImportHandler ImportCompleted;
+        public event ImportHandler ImportFailed;
+        public event ImportHandler ImportUpdate;
 
         public SharepointManager(string siteUrl, string username, string password, string domain)
         {
@@ -27,6 +44,21 @@ namespace Trilogen
             // load context
             _context.Load(_web);
             _context.ExecuteQuery();
+        }
+
+        private void importCompleted(ImportEvent e)
+        {
+            ImportCompleted(e);
+        }
+
+        private void importFailed(ImportEvent e)
+        {
+            ImportFailed(e);
+        }
+
+        private void importUpdate(ImportEvent e)
+        {
+            ImportUpdate(e);
         }
 
         public List<SharepointList> GetLists()
@@ -89,80 +121,145 @@ namespace Trilogen
             if (mappings == null)
                 return false;
 
-            // get sp  list
-            List selectedList =  _web.Lists.GetById(listId);
-
-            // try load list
             try
             {
+                // get sp list
+                List selectedList = _web.Lists.GetById(listId);
 
-                // get list including fields
-                _context.Load(selectedList, l=>l.Fields);
-                _context.ExecuteQuery();
-
-            }
-            catch (Exception)
-            {
-                // list not found
-                return false;
-            }
-            
-            // get list of valid headers
-            List<string> validHeaders = new List<string>();
-
-            // load headers
-            foreach(var column in selectedList.Fields) {
-                // not read only
-                if (!column.ReadOnlyField)
+                // try load list
+                try
                 {
-                    // add valid header or selected list
-                    validHeaders.Add(column.EntityPropertyName); 
-                }    
-            }
-            
-            // record index
-            int recordIndex = 0;
-
-            // loop through records
-            foreach (string[] record in records)
-            {
-                // commit changes every 20 records
-                if (recordIndex > maxListItemsPerQuery)
-                {
-                    // commit changes
+                    // get list including fields
+                    _context.Load(selectedList, l => l.Fields);
                     _context.ExecuteQuery();
 
-                    // reset index
-                    recordIndex = 0;
+                }
+                catch (Exception e)
+                {
+                    // send failed event
+                    importFailed(new ImportEvent
+                    {
+                        ErrorMessage = e.Message,
+                        Success = false
+                    });
+
+                    // list not found
+                    return false;
                 }
 
-                // new list item
-                ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
-                ListItem newItem = selectedList.AddItem(itemCreateInfo);
+                // get list of valid headers
+                List<string> validHeaders = new List<string>();
 
-                // loop through 
-                for (int i = 0; i < headers.Length; i++)
+                // load headers
+                foreach (var column in selectedList.Fields)
                 {
-                    string currentHeader = headers[i];
-
-                    // header is not valid, move on
-                    if (validHeaders.Contains(currentHeader))
+                    // not read only
+                    if (!column.ReadOnlyField)
                     {
-                        // populate new item
-                        newItem[currentHeader] = record[i];
-
-                        // update item
-                        newItem.Update();
+                        // add valid header or selected list
+                        validHeaders.Add(column.InternalName);
                     }
                 }
 
-                // incrememnt
-                recordIndex++;
+                // record index
+                int recordIndex = 0;
+
+                // total items processed
+                float totalRecordsProcessed = 0;
+
+                // progress value
+                float progressValue = 0;
+                float totalRecords = (float)records.Count;
+
+                // loop through records
+                foreach (string[] record in records)
+                {
+                    // commit changes every 20 records
+                    if (recordIndex > maxListItemsPerQuery)
+                    {
+                        // commit changes
+                        _context.ExecuteQuery();
+
+                        // reset index
+                        recordIndex = 0;
+
+                        // update progress bar
+                        progressValue = (totalRecordsProcessed / totalRecords) * 100;
+
+                        // send update event
+                        importUpdate(new ImportEvent
+                        {
+                            ImportProgressValue = progressValue,
+                            RecordsImported = (int)totalRecordsProcessed,
+                            TotalRecords = (int)totalRecords,
+                            Success = true,
+                            ErrorMessage = string.Empty
+                        });
+                    }
+
+                    // new list item
+                    ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
+                    ListItem newItem = selectedList.AddItem(itemCreateInfo);
+
+                    // loop through 
+                    for (int i = 0; i < headers.Length; i++)
+                    {
+                        string currentHeader = headers[i];
+
+                        // header is not valid, move on
+                        if (validHeaders.Contains(currentHeader))
+                        {
+                            // populate new item
+                            newItem[currentHeader] = record[i];
+
+                            // update item
+                            newItem.Update();
+                        }
+                    }
+
+                    // update total count of processed items
+                    totalRecordsProcessed++;
+
+                    // incrememnt
+                    recordIndex++;
+                }
+
+                // commit remaining changes
+                _context.ExecuteQuery();
+
+                // send update event
+                importUpdate(new ImportEvent
+                {
+                    ImportProgressValue = progressValue,
+                    RecordsImported = (int)totalRecordsProcessed,
+                    TotalRecords = (int)totalRecords,
+                    Success = true,
+                    ErrorMessage = string.Empty
+                });
+
+                // send complete event
+                importCompleted(new ImportEvent
+                {
+                    Success = true,
+                    RecordsImported = (int)totalRecordsProcessed,
+                    TotalRecords = records.Count,
+                    ErrorMessage = string.Empty,
+                    ImportProgressValue = 100f
+                });
+            }
+            catch (Exception ex)
+            {
+                // send failed event
+                importFailed(new ImportEvent
+                {
+                    ErrorMessage = ex.Message,
+                    Success = false
+                });
+
+                return false;
             }
 
-            // commit remaining changes
-            _context.ExecuteQuery();
-
+            // success
             return true;
         }
 
@@ -179,118 +276,176 @@ namespace Trilogen
             if (mappings == null)
                 return false;
 
-
+            
             // date
             DateTime date = DateTime.Now;
 
-            // create list
-            ListCreationInformation creationInfo = new ListCreationInformation();
-            creationInfo.Title = listName;
-            creationInfo.TemplateType = (int)ListTemplateType.GenericList;
-
-            // list details
-            List list = _web.Lists.Add(creationInfo);
-            list.Description = "Fast Report - imported on " + date.ToString("G");
-            list.Update();
-
-            // commit changes
-            _context.ExecuteQuery();
-
-            // create list columns based on selected columns
-            for (int i = 0; i < mappings.Rows.Count; i++)
+            try
             {
-                // column header
-                string columnHeader = Convert.ToString(mappings.Rows[i].Cells[1].Value);
+                // create list
+                ListCreationInformation creationInfo = new ListCreationInformation();
+                creationInfo.Title = listName;
+                creationInfo.TemplateType = (int)ListTemplateType.GenericList;
 
-                // data type
-                string dataType = Convert.ToString(mappings.Rows[i].Cells[3].Value);
+                // list details
+                List list = _web.Lists.Add(creationInfo);
+                list.Description = "Imported on " + date.ToString("G");
+                list.Update();
 
-                // is checked
-                bool isChecked = Convert.ToBoolean(mappings.Rows[i].Cells[0].Value);
+                // commit changes
+                _context.ExecuteQuery();
 
-                // only add columns for items that were selected
-                if (isChecked)
+                // create list columns based on selected columns
+                for (int i = 0; i < mappings.Rows.Count; i++)
                 {
-                    // new field
-                    Field newField = null;
+                    // column header
+                    string columnHeader = Convert.ToString(mappings.Rows[i].Cells[1].Value);
 
-                    // check column types
-                    if (dataType == "Number")
+                    // data type
+                    string dataType = Convert.ToString(mappings.Rows[i].Cells[3].Value);
+
+                    // is checked
+                    bool isChecked = Convert.ToBoolean(mappings.Rows[i].Cells[0].Value);
+
+                    // only add columns for items that were selected
+                    if (isChecked)
                     {
-                        // column type is number
-                        newField = list.Fields.AddFieldAsXml("<Field DisplayName='" + columnHeader + "' Name='" + columnHeader + "' Type='Number' />", true, AddFieldOptions.DefaultValue);
-                    }
-                    else if (dataType == "Html")
-                    {
-                        // column type is html
-                        newField = list.Fields.AddFieldAsXml("<Field DisplayName='" + columnHeader + "' Name='" + columnHeader + "' RestrictedMode='TRUE' Type='Note' NumLines='6' RichText='TRUE' RichTextMode='FullHtml' Required='FALSE' EnforceUniqueValues='FALSE' Indexed='FALSE' IsolateStyles='TRUE' AppendOnly='FALSE' />", true, AddFieldOptions.DefaultValue);
-                    }
-                    else
-                    {
-                        // all others are text
-                        newField = list.Fields.AddFieldAsXml("<Field DisplayName='" + columnHeader + "' Name='" + columnHeader + "' Type='Text' />", true, AddFieldOptions.DefaultValue);
-                    }
+                        // new field
+                        Field newField = null;
 
-                    // new field exists
-                    if (newField != null)
-                    {
-                        newField.Update();
-                    }
-                }                
-            }
+                        // check column types
+                        if (dataType == "Number")
+                        {
+                            // column type is number
+                            newField = list.Fields.AddFieldAsXml("<Field DisplayName='" + columnHeader + "' Name='" + columnHeader + "' Type='Number' />", true, AddFieldOptions.DefaultValue);
+                        }
+                        else if (dataType == "Html")
+                        {
+                            // column type is html
+                            newField = list.Fields.AddFieldAsXml("<Field DisplayName='" + columnHeader + "' Name='" + columnHeader + "' RestrictedMode='TRUE' Type='Note' NumLines='6' RichText='TRUE' RichTextMode='FullHtml' Required='FALSE' EnforceUniqueValues='FALSE' Indexed='FALSE' IsolateStyles='TRUE' AppendOnly='FALSE' />", true, AddFieldOptions.DefaultValue);
+                        }
+                        else
+                        {
+                            // all others are text
+                            newField = list.Fields.AddFieldAsXml("<Field DisplayName='" + columnHeader + "' Name='" + columnHeader + "' Type='Text' />", true, AddFieldOptions.DefaultValue);
+                        }
 
-            // commit changes
-            _context.ExecuteQuery();
-
-            int recordIndex = 0;
-
-            // loop through records
-            foreach (string[] record in records)
-            {
-                // commit changes every 20 records
-                if (recordIndex > maxListItemsPerQuery)
-                {
-                    // commit changes
-                    _context.ExecuteQuery();
-
-                    // reset index
-                    recordIndex = 0;
-                }
-
-                // new list item
-                ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
-                ListItem newItem = list.AddItem(itemCreateInfo);
-
-                // loop through 
-                for (int i = 0; i < headers.Length; i++)
-                {
-                    // get record details
-                    string recordHeader = headers[i];
-
-                    // next record if column header is blank
-                    if (string.IsNullOrEmpty(recordHeader))
-                        continue;
-
-                    // column/header is selected to be imported
-                    if (isItemChecked(recordHeader, mappings))
-                    {
-                        string recordContent = record[i];
-
-                        // populate new item
-                        newItem[recordHeader] = recordContent;
-
-                        // update
-                        newItem.Update();
+                        // new field exists
+                        if (newField != null)
+                        {
+                            newField.Update();
+                        }
                     }
                 }
 
-                // incrememnt
-                recordIndex++;
+                // commit changes
+                _context.ExecuteQuery();
+
+                int recordIndex = 0;
+
+                // total items processed
+                float totalRecordsProcessed = 0;
+                float totalRecords = (int)records.Count;
+
+                // progress value
+                float progressValue = 0;
+
+                // loop through records
+                foreach (string[] record in records)
+                {
+                    // commit changes every 20 records
+                    if (recordIndex > maxListItemsPerQuery)
+                    {
+                        // commit changes
+                        _context.ExecuteQuery();
+
+                        // reset index
+                        recordIndex = 0;
+
+                        // update progress bar
+                        progressValue = (totalRecordsProcessed / totalRecords) * 100f;
+
+                        // send update event
+                        importUpdate(new ImportEvent
+                        {
+                            ImportProgressValue = progressValue,
+                            RecordsImported = (int)totalRecordsProcessed,
+                            TotalRecords = (int)totalRecords,
+                            Success = true,
+                            ErrorMessage = string.Empty
+                        });
+                    }
+
+                    // new list item
+                    ListItemCreationInformation itemCreateInfo = new ListItemCreationInformation();
+                    ListItem newItem = list.AddItem(itemCreateInfo);
+
+                    // loop through 
+                    for (int i = 0; i < headers.Length; i++)
+                    {
+                        // get record details
+                        string recordHeader = headers[i];
+
+                        // next record if column header is blank
+                        if (string.IsNullOrEmpty(recordHeader))
+                            continue;
+
+                        // column/header is selected to be imported
+                        if (isItemChecked(recordHeader, mappings))
+                        {
+                            string recordContent = record[i];
+
+                            // populate new item
+                            newItem[recordHeader] = recordContent;
+
+                            // update
+                            newItem.Update();
+                        }
+                    }
+
+                    // update total items processed
+                    totalRecordsProcessed++;
+
+                    // incrememnt
+                    recordIndex++;
+                }
+
+                // commit remaining changes
+                _context.ExecuteQuery();
+
+                // send update event
+                importUpdate(new ImportEvent
+                {
+                    ImportProgressValue = progressValue,
+                    RecordsImported = (int)totalRecordsProcessed,
+                    TotalRecords = (int)totalRecords,
+                    Success = true,
+                    ErrorMessage = string.Empty
+                });
+
+                // send complete event
+                importCompleted(new ImportEvent
+                {
+                    Success = true,
+                    RecordsImported = (int)totalRecordsProcessed,
+                    TotalRecords = records.Count,
+                    ErrorMessage = string.Empty,
+                    ImportProgressValue = 100f
+                });
+            }
+            catch (Exception ex)
+            {
+                // send failed event
+                importFailed(new ImportEvent
+                {
+                    ErrorMessage = ex.Message,
+                    Success = false
+                });
+
+                return false;
             }
 
-            // commit remaining changes
-            _context.ExecuteQuery();
-
+            // success
             return true;
         }
 

@@ -418,6 +418,7 @@
             this.Name = "ImportForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Import CSV into SharePoint";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.ImportForm_FormClosed);
             this.gbLogin.ResumeLayout(false);
             this.gbLogin.PerformLayout();
             this.gbValidate.ResumeLayout(false);

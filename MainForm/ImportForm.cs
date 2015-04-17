@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.SharePoint;
@@ -26,6 +27,14 @@ namespace Trilogen
         DataGridViewComboBoxCell cbSpListItems = null;
         CsvParser csvParser = null;
         List<string[]> csvRecords = null;
+        Thread importThread = null;
+        StatusForm statusForm = null;
+
+        // delegates
+        private delegate void SetProgressValueCallback(int value);
+        private delegate void ResetListNameCallback();
+        private delegate void EnableBrowseCallback();
+        private delegate void EnableImportCallback();
 
         public ImportForm()
         {
@@ -47,7 +56,7 @@ namespace Trilogen
 
             // setup mappings
             dtMapping = new DataTable();
-            cbSpListItems = new DataGridViewComboBoxCell();
+            cbSpListItems = new DataGridViewComboBoxCell();            
         }
 
         public bool Connect(string siteUrl, string username, string password, string domain)
@@ -58,6 +67,11 @@ namespace Trilogen
             {
                 // sp manager
                 spManager = new SharepointManager(siteUrl, username, password, domain);
+
+                // events
+                spManager.ImportCompleted += new ImportHandler(importCompleted);
+                spManager.ImportFailed += new ImportHandler(importFailed);
+                spManager.ImportUpdate += new ImportHandler(importUpdated);
 
                 // sp lists
                 var spLists = spManager.GetLists();
@@ -183,7 +197,7 @@ namespace Trilogen
                             newRow.Cells.Add(cbType);
 
                             // add row
-                            dgvMappings.Rows.Add(newRow); 
+                            dgvMappings.Rows.Add(newRow);
 
                             // set read only after row is added
                             cbMappings.ReadOnly = true;
@@ -323,11 +337,11 @@ namespace Trilogen
                         // not read only
                         if (!field.ReadOnlyField)
                         {
-                            cbCurrentMapping.Items.Add(field.EntityPropertyName);
+                            cbCurrentMapping.Items.Add(field.InternalName);
 
-                            if (columnName == field.EntityPropertyName)
+                            if (columnName == field.InternalName)
                             {
-                                matchedProperty = field.EntityPropertyName;
+                                matchedProperty = field.InternalName;
                             }
                         }
 
@@ -338,7 +352,7 @@ namespace Trilogen
                     if (!string.IsNullOrEmpty(matchedProperty))
                     {
                         cbCurrentMapping.Value = matchedProperty;
-                    }  
+                    }
                 }
 
                 // refresh grid
@@ -381,7 +395,7 @@ namespace Trilogen
 
                 // checkbox cell
                 DataGridViewCheckBoxCell cbCell = (DataGridViewCheckBoxCell)row.Cells[0];
-                
+
                 // is checked
                 bool isChecked = (Convert.ToBoolean(cbCell.Value));
 
@@ -400,8 +414,86 @@ namespace Trilogen
             return false;
         }
 
+        
+        private void importUpdated(ImportEvent e)
+        {
+            if (e != null)
+            {
+                // round progress
+                int progressValue = (int)Math.Round(e.ImportProgressValue, 0);
+
+                if (statusForm != null)
+                {
+                    statusForm.SetProgressValue(progressValue);
+                    statusForm.SetStatusText("Imported " + e.RecordsImported + " of " + e.TotalRecords + " records");
+                }
+            }
+        }
+
+        private void importCompleted(ImportEvent e)
+        {
+            // close status window
+            if (statusForm != null)
+            {
+                statusForm.CloseWindow();
+            }
+
+            // success message
+            MessageBox.Show("Successfully imported " + e.RecordsImported + " records into SharePoint!", "Import completed", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // enable browse
+            enableBrowse();
+
+            // enable import
+            enableImport();
+        }
+
+        private void importFailed(ImportEvent e)
+        {
+            // close status window
+            if (statusForm != null)
+            {
+                statusForm.CloseWindow();
+            }
+
+            // error msg
+            MessageBox.Show("Error importing CSV file into SharePoint.\n\n" + e.ErrorMessage, "Error importing CSV", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+            // enable browse
+            enableBrowse();
+
+            // enable import
+            enableImport();
+        }
+
+        private void importCancelled()
+        {
+            // abort import thread
+            if (importThread != null)
+            {
+                if (importThread.IsAlive)
+                {
+                    importThread.Abort();
+                    importThread = null;
+                }
+            }
+
+            // enable browse
+            enableBrowse();
+
+            // enable import
+            enableImport();
+        }
+
         private void btnImport_Click(object sender, EventArgs e)
         {
+            // clear status window
+            if (statusForm != null)
+            {
+                statusForm.CloseWindow();
+                statusForm = null;
+            }
+
             // validate column selection
             if (!HasSelectedMappingColumn())
             {
@@ -438,25 +530,27 @@ namespace Trilogen
                 // selected list
                 if (listId != Guid.Empty)
                 {
-                    bool appendResult = spManager.Import(listId, csvHeaders, csvRecords, dgvMappings);
+                    // start import thread
+                    importThread = new Thread(
+                        () => spManager.Import(listId, csvHeaders, csvRecords, dgvMappings)
+                    );
 
-                    if (!appendResult)
-                    {
-                        MessageBox.Show("Error importing CSV file into SharePoint", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-                    else
-                    {
-                        int numRecordsImported = csvRecords.Count;
+                    // start thread
+                    importThread.Start();
 
-                        MessageBox.Show("CSV file imported " + numRecordsImported + " records into '" + listName + "' successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // show new status window
+                    statusForm = new StatusForm();
+                    statusForm.SetTitle("Importing CSV records");
+                    statusForm.SetStatusText("Importing " + csvRecords.Count + " records");
+                    statusForm.Show();
 
-                        // reset selected items
-                        cbListname.Text = string.Empty;
-                        cbListname.SelectedIndex = -1;
+                    // bind to cancel event
+                    statusForm.CancelClicked += importCancelled;
 
-                        // reset mappings
-                        UpdateMappings();
-                    }
+                    // disable buttons
+                    btnBrowse.Enabled = false;
+                    btnValidateFile.Enabled = false;
+                    btnImport.Enabled = false;
                 }
                 else
                 {
@@ -465,9 +559,9 @@ namespace Trilogen
                     if (listNameExists(listName))
                     {
                         // show error msg
-                        MessageBox.Show("List name already exists! Please enter a new name or select one from the list and try again.", 
+                        MessageBox.Show("List name already exists! Please enter a new name or select one from the list and try again.",
                             "List name taken", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        
+
                         return;
                     }
 
@@ -475,32 +569,40 @@ namespace Trilogen
                     if (!HasSelectedDataType())
                     {
                         // show error msg
-                        MessageBox.Show("You must select a data type for each new column that will be imported into SharePoint.", 
+                        MessageBox.Show("You must select a data type for each new column that will be imported into SharePoint.",
                             "Missing data type selection", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                         return;
                     }
 
-                    // create new list
-                    bool importResult = false;
-
                     // try sharepoint import
                     try
                     {
-                        importResult = spManager.Import(listName, csvHeaders, csvRecords, dgvMappings);
+                        // start import thread
+                        importThread = new Thread(
+                            () => spManager.Import(listName, csvHeaders, csvRecords, dgvMappings)
+                        );
+
+                        // start thread
+                        importThread.Start();
+
+                        // show new status window
+                        statusForm = new StatusForm();
+                        statusForm.SetTitle("Importing CSV records");
+                        statusForm.SetStatusText("Importing " + csvRecords.Count + " records");
+                        statusForm.Show();
+
+                        // bind to cancel event
+                        statusForm.CancelClicked += importCancelled;
+
+                        // disable buttons
+                        btnBrowse.Enabled = false;
+                        btnValidateFile.Enabled = false;
+                        btnImport.Enabled = false;
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("SharePoint error: " + ex.Message);
-
-                        importResult = false;
-                    } 
-
-                    
-                    // import failed
-                    if(!importResult)
-                    {
-                        MessageBox.Show("CSV file has been imported successfully!\n\nA new list has been created: '" + listName + "'", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Error: " + ex.Message);
                     }
                 }
             }
@@ -579,7 +681,7 @@ namespace Trilogen
                     // unselect any selected mappings
                     cbCurrentMapping.Value = null;
                     cbCurrentMapping.ReadOnly = true;
-                    
+
                     cbCurrentMapping.Items.Clear();
                 }
             }
@@ -622,7 +724,7 @@ namespace Trilogen
             // flags
             btnConnect.Enabled = true;
             btnDisconnect.Enabled = false;
-            
+
             // reset validate group box
             gbValidate.Enabled = false;
             txtImportFilename.Text = string.Empty;
@@ -646,26 +748,90 @@ namespace Trilogen
                 if (cbSelected != null)
                 {
                     bool isSelected = Convert.ToBoolean(cbSelected.Value);
-                    
+
                     if (isSelected)
                         cbSelected.Value = false;
                 }
-                
+
                 // mapping drop down
                 DataGridViewComboBoxCell cbMapping = (DataGridViewComboBoxCell)row.Cells[2];
-                
-                if(cbMapping != null)
+
+                if (cbMapping != null)
                     cbMapping.Value = null;
 
                 // data type
                 DataGridViewComboBoxCell cbType = (DataGridViewComboBoxCell)row.Cells[3];
-                
+
                 if (cbType != null)
                     cbType.Value = null;
             }
 
             // refresh mappings
             dgvMappings.Update();
+        }
+
+        private void ImportForm_FormClosed(Object sender, FormClosedEventArgs e)
+        {
+            // abort import thread if one exists
+            if (importThread != null)
+            {
+                if (importThread.IsAlive)
+                {
+                    importThread.Abort();
+                }
+            }
+
+            // close status window
+            if (statusForm != null)
+            {
+                // close window
+                statusForm.CloseWindow();
+                statusForm = null;
+            }
+        }
+
+        // thread safe - enable browse
+        private void enableBrowse()
+        {
+            if (btnBrowse.InvokeRequired)
+            {
+                EnableBrowseCallback enableBrowseCallback = new EnableBrowseCallback(enableBrowse);
+                this.Invoke(enableBrowseCallback);
+            }
+            else
+            {
+                // enable button
+                btnBrowse.Enabled = true;
+            }
+        }
+
+        // thead safe - reset list  name
+        private void resetListName()
+        {
+            if (cbListname.InvokeRequired)
+            {
+                ResetListNameCallback resetListNameCallback = new ResetListNameCallback(resetListName);
+                this.Invoke(resetListNameCallback);
+            }
+            else
+            {
+                // reset selected items
+                cbListname.Text = string.Empty;
+                cbListname.SelectedIndex = -1;
+            }
+        }
+
+        private void enableImport()
+        {
+            if (btnImport.InvokeRequired)
+            {
+                EnableImportCallback enableImportCallback = new EnableImportCallback(enableImport);
+                this.Invoke(enableImportCallback);
+            }
+            else
+            {
+                btnImport.Enabled = true;
+            }
         }
     }
 }
